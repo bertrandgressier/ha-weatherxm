@@ -29,42 +29,50 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "Get current version"
-        id: current_version
-        run: |
-          CURRENT=$(jq -r '.version' custom_components/weatherxm/manifest.json)
-          echo "version=$CURRENT" >> $GITHUB_OUTPUT
-
       - name: "Calculate next beta version"
         id: next_version
         run: |
-          CURRENT="${{ steps.current_version.outputs.version }}"
           BUMP="${{ inputs.version_bump }}"
           
+          # Get latest stable release tag (excluding beta)
+          LATEST_STABLE=$(git tag -l | grep -v beta | grep -E '^[0-9]' | sort -V | tail -1)
+          echo "Latest stable: $LATEST_STABLE"
+          
           # Get latest beta tag
-          LATEST_BETA=$(git tag -l "v*-beta*" | sort -V | tail -1)
+          LATEST_BETA=$(git tag -l "*-beta*" | sort -V | tail -1)
+          echo "Latest beta: $LATEST_BETA"
           
           if [ -z "$LATEST_BETA" ]; then
-            # No beta exists, create first beta
+            # No beta exists, create first beta from latest stable + bump
+            BASE_VERSION="${LATEST_STABLE#v}"
+            
             if [ "$BUMP" = "major" ]; then
-              NEW_VERSION=$(echo $CURRENT | awk -F. '{print $1+1".0.0"}')
+              NEW_VERSION=$(echo $BASE_VERSION | awk -F. '{print $1+1".0.0"}')
             elif [ "$BUMP" = "minor" ]; then
-              NEW_VERSION=$(echo $CURRENT | awk -F. '{$2++; print $1"."$2".0"}')
+              NEW_VERSION=$(echo $BASE_VERSION | awk -F. '{$2++; print $1"."$2".0"}')
             else
-              NEW_VERSION=$(echo $CURRENT | awk -F. '{$3++; print $1"."$2"."$3"}')
+              NEW_VERSION=$(echo $BASE_VERSION | awk -F. '{$3++; print $1"."$2"."$3"}')
             fi
             NEW_VERSION="${NEW_VERSION}-beta.1"
           else
-            # Increment beta number
+            # Beta exists, increment or bump version
             BASE_VERSION=$(echo $LATEST_BETA | sed 's/-beta\.[0-9]*$//' | sed 's/^v//')
             BETA_NUM=$(echo $LATEST_BETA | sed 's/.*-beta\.\([0-9]*\)$/\1/')
             
-            if [ "$BUMP" != "patch" ]; then
-              # New version requested
+            # Check if we need to start from latest stable
+            STABLE_VERSION="${LATEST_STABLE#v}"
+            
+            # Compare versions
+            HIGHER_BASE=$(printf "$BASE_VERSION\n$STABLE_VERSION\n" | sort -V | tail -1)
+            
+            if [ "$HIGHER_BASE" != "$BASE_VERSION" ] || [ "$BUMP" != "patch" ]; then
+              # Stable is higher or user requested bump
               if [ "$BUMP" = "major" ]; then
-                BASE_VERSION=$(echo $BASE_VERSION | awk -F. '{print $1+1".0.0"}')
+                BASE_VERSION=$(echo $STABLE_VERSION | awk -F. '{print $1+1".0.0"}')
+              elif [ "$BUMP" = "minor" ]; then
+                BASE_VERSION=$(echo $STABLE_VERSION | awk -F. '{$2++; print $1"."$2".0"}')
               else
-                BASE_VERSION=$(echo $BASE_VERSION | awk -F. '{$2++; print $1"."$2".0"}')
+                BASE_VERSION=$(echo $STABLE_VERSION | awk -F. '{$3++; print $1"."$2"."$3"}')
               fi
               BETA_NUM=1
             else
