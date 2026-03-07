@@ -1,0 +1,98 @@
+name: "Beta Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      release_notes:
+        description: 'Release notes'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  beta-release:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout the repository"
+        uses: "actions/checkout@v4.1.0"
+        with:
+          fetch-depth: 0
+
+      - name: "Get current version"
+        id: current_version
+        run: |
+          CURRENT=$(jq -r '.version' custom_components/weatherxm/manifest.json)
+          echo "version=$CURRENT" >> $GITHUB_OUTPUT
+
+      - name: "Calculate next beta version"
+        id: next_version
+        run: |
+          CURRENT="${{ steps.current_version.outputs.version }}"
+          BUMP="${{ inputs.version_bump }}"
+          
+          # Get latest beta tag
+          LATEST_BETA=$(git tag -l "v*-beta*" | sort -V | tail -1)
+          
+          if [ -z "$LATEST_BETA" ]; then
+            # No beta exists, create first beta
+            if [ "$BUMP" = "major" ]; then
+              NEW_VERSION=$(echo $CURRENT | awk -F. '{print $1+1".0.0"}')
+            elif [ "$BUMP" = "minor" ]; then
+              NEW_VERSION=$(echo $CURRENT | awk -F. '{$2++; print $1"."$2".0"}')
+            else
+              NEW_VERSION=$(echo $CURRENT | awk -F. '{$3++; print $1"."$2"."$3"}')
+            fi
+            NEW_VERSION="${NEW_VERSION}-beta.1"
+          else
+            # Increment beta number
+            BASE_VERSION=$(echo $LATEST_BETA | sed 's/-beta\.[0-9]*$//' | sed 's/^v//')
+            BETA_NUM=$(echo $LATEST_BETA | sed 's/.*-beta\.\([0-9]*\)$/\1/')
+            
+            if [ "$BUMP" != "patch" ]; then
+              # New version requested
+              if [ "$BUMP" = "major" ]; then
+                BASE_VERSION=$(echo $BASE_VERSION | awk -F. '{print $1+1".0.0"}')
+              else
+                BASE_VERSION=$(echo $BASE_VERSION | awk -F. '{$2++; print $1"."$2".0"}')
+              fi
+              BETA_NUM=1
+            else
+              BETA_NUM=$((BETA_NUM + 1))
+            fi
+            NEW_VERSION="${BASE_VERSION}-beta.${BETA_NUM}"
+          fi
+          
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: "Create and push tag"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a ${{ steps.next_version.outputs.tag }} -m "Beta release ${{ steps.next_version.outputs.version }}"
+          git push origin ${{ steps.next_version.outputs.tag }}
+
+      - name: "Create GitHub Release"
+        uses: softprops/action-gh-release@v0.1.15
+        with:
+          tag_name: ${{ steps.next_version.outputs.tag }}
+          name: ${{ steps.next_version.outputs.version }}
+          body: |
+            ## Beta Release ${{ steps.next_version.outputs.version }}
+            
+            ${{ inputs.release_notes }}
+            
+            **⚠️ This is a beta release for testing purposes.**
+          prerelease: true
+          draft: false
