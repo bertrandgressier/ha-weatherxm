@@ -8,6 +8,9 @@ from .rewards import WeatherXMRewardsSensor, WeatherXMTotalRewardsSensor
 from .firmware import WeatherXMFirmwareSensor
 from .last_update import WeatherXMLastUpdateSensor
 from .activity_status import WeatherXMActivityStatusSensor
+from .quality import WeatherXMQualitySensor
+from .network import WeatherXMNetworkSensor
+from .relation import WeatherXMRelationSensor
 
 
 async def async_setup_entry(
@@ -88,3 +91,33 @@ async def async_setup_entry(
         ),
     )
     async_add_entities(activity_status, True)
+
+    # Quality sensors
+    quality = await async_setup_entities_list(
+        hass,
+        entry,
+        lambda alias, device: WeatherXMQualitySensor(
+            coordinator=coordinator, device_id=device["id"], alias=alias
+        ),
+    )
+    async_add_entities(quality, True)
+
+    # Network sensors
+    network = await async_setup_entities_list(
+        hass,
+        entry,
+        lambda alias, device: WeatherXMNetworkSensor(
+            coordinator=coordinator, device_id=device["id"], alias=alias
+        ),
+    )
+    async_add_entities(network, True)
+
+    # Relation sensors
+    relation = await async_setup_entities_list(
+        hass,
+        entry,
+        lambda alias, device: WeatherXMRelationSensor(
+            coordinator=coordinator, device_id=device["id"], alias=alias
+        ),
+    )
+    async_add_entities(relation, True)
