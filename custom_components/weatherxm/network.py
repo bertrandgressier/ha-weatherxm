@@ -33,9 +33,10 @@ class WeatherXMNetworkSensor(CoordinatorEntity, SensorEntity):
         device = self._get_device_data()
         if device:
             bundle = device.get("bundle", {})
-            connectivity = bundle.get("connectivity", "unknown")
-            return connectivity
-        return "unknown"
+            connectivity = bundle.get("connectivity")
+            if connectivity:
+                return connectivity
+        return None
 
     @property
     def extra_state_attributes(self):
