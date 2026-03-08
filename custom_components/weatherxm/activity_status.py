@@ -31,35 +31,19 @@ class WeatherXMActivityStatusSensor(CoordinatorEntity, SensorEntity):
     def state(self):
         """Return the state of the sensor."""
         device = self._get_device_data()
-        if device:
-            return (
-                "active" if device["attributes"].get("isActive", False) else "inactive"
-            )
-        return "unknown"
+        if not device:
+            return None
+        return "active" if device["attributes"].get("isActive", False) else "inactive"
 
     @property
     def icon(self):
         """Return the icon to use in the frontend."""
         device = self._get_device_data()
-        if device:
-            if device["attributes"].get("isActive", False):
-                return "mdi:check-circle"
-            else:
-                return "mdi:alert-circle"
-        return "mdi:help-circle"
-
-    @property
-    def extra_state_attributes(self):
-        """Return the state attributes."""
-        device = self._get_device_data()
-        if device:
-            return {
-                "last_weather_station_activity": device["attributes"].get(
-                    "lastWeatherStationActivity"
-                ),
-                "last_active_at": device["attributes"].get("lastActiveAt"),
-            }
-        return {}
+        if not device:
+            return "mdi:help-circle"
+        if device["attributes"].get("isActive", False):
+            return "mdi:check-circle"
+        return "mdi:alert-circle"
 
     @property
     def device_info(self) -> DeviceInfo:
