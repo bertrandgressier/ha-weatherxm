@@ -35,7 +35,8 @@ class WeatherXMLastStationActivitySensor(CoordinatorEntity, SensorEntity):
         """Return the state of the sensor."""
         device = self._get_device_data()
         if device:
-            last_activity = device["attributes"].get("lastWeatherStationActivity")
+            attributes = device.get("attributes") or {}
+            last_activity = attributes.get("lastWeatherStationActivity")
             if last_activity:
                 return last_activity
         return None
@@ -45,7 +46,8 @@ class WeatherXMLastStationActivitySensor(CoordinatorEntity, SensorEntity):
         """Return the state attributes."""
         device = self._get_device_data()
         if device:
-            return {"last_active_at": device["attributes"].get("lastActiveAt")}
+            attributes = device.get("attributes") or {}
+            return {"last_active_at": attributes.get("lastActiveAt")}
         return {}
 
     @property

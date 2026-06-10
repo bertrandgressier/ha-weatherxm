@@ -25,7 +25,10 @@ class WeatherXMFirmwareSensor(CoordinatorEntity, SensorEntity):
     def _firmware(self):
         """Get firmware data from coordinator."""
         device = self._get_device_data()
-        return device['attributes'].get('firmware', {}) if device else {}
+        if device:
+            attributes = device.get('attributes') or {}
+            return attributes.get('firmware', {})
+        return {}
 
     @property
     def state(self):

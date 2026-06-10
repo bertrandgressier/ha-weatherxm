@@ -35,12 +35,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             for device in devices:
                 _LOGGER.debug("Fetching forecast for device %s", device['id'])
                 device['forecast'] = await api.get_forecast_data(device['id'])
+                current_weather = device.get('current_weather') or {}
                 _LOGGER.debug(
                     "Device %s data - Temperature: %s, Humidity: %s, Wind: %s",
                     device['id'],
-                    device['current_weather'].get('temperature'),
-                    device['current_weather'].get('humidity'),
-                    device['current_weather'].get('wind_speed')
+                    current_weather.get('temperature'),
+                    current_weather.get('humidity'),
+                    current_weather.get('wind_speed')
                 )
             _LOGGER.debug("WeatherXM data update completed successfully")
             return devices

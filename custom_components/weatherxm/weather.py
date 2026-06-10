@@ -133,7 +133,7 @@ class WeatherXMWeather(CoordinatorEntity, WeatherEntity):
         """Get current weather from coordinator data."""
         for device in self.coordinator.data or []:
             if device["id"] == self._device_id:
-                return device["current_weather"]
+                return device.get("current_weather") or {}
         return {}
 
     @property

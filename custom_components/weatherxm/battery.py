@@ -45,7 +45,10 @@ class WeatherXMBatteryLevelSensor(CoordinatorEntity, SensorEntity):
     def _is_active(self):
         """Get active state from coordinator data."""
         device = self._get_device_data()
-        return device['attributes'].get('isActive', False) if device else False
+        if device:
+            attributes = device.get('attributes') or {}
+            return attributes.get('isActive', False)
+        return False
 
     @property
     def state(self):

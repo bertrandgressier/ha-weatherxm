@@ -34,8 +34,10 @@ class WeatherXMLastUpdateSensor(CoordinatorEntity, SensorEntity):
     def state(self):
         """Return the state of the sensor."""
         device = self._get_device_data()
-        if device and device.get("current_weather", {}).get("timestamp"):
-            return device["current_weather"]["timestamp"]
+        if device:
+            current_weather = device.get("current_weather") or {}
+            if current_weather.get("timestamp"):
+                return current_weather["timestamp"]
         return None
 
     @property

@@ -32,7 +32,7 @@ class WeatherXMNetworkSensor(CoordinatorEntity, SensorEntity):
         """Return the state of the sensor."""
         device = self._get_device_data()
         if device:
-            bundle = device.get("bundle", {})
+            bundle = device.get("bundle") or {}
             connectivity = bundle.get("connectivity")
             if connectivity:
                 return connectivity
@@ -43,7 +43,7 @@ class WeatherXMNetworkSensor(CoordinatorEntity, SensorEntity):
         """Return the state attributes."""
         device = self._get_device_data()
         if device:
-            bundle = device.get("bundle", {})
+            bundle = device.get("bundle") or {}
             return {
                 "connectivity": bundle.get("connectivity"),
                 "weather_station_model": bundle.get("ws_model"),
@@ -60,7 +60,7 @@ class WeatherXMNetworkSensor(CoordinatorEntity, SensorEntity):
         """Return the icon to use in the frontend."""
         device = self._get_device_data()
         if device:
-            connectivity = device.get("bundle", {}).get("connectivity")
+            connectivity = (device.get("bundle") or {}).get("connectivity")
             if connectivity == "wifi":
                 return "mdi:wifi"
             elif connectivity == "lorawan":

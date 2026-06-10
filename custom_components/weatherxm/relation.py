@@ -42,7 +42,7 @@ class WeatherXMRelationSensor(CoordinatorEntity, SensorEntity):
         """Return the state attributes."""
         device = self._get_device_data()
         if device:
-            attributes = device.get("attributes", {})
+            attributes = device.get("attributes") or {}
             return {
                 "relation": device.get("relation"),
                 "claimed_at": attributes.get("claimedAt"),

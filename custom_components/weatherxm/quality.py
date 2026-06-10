@@ -36,7 +36,7 @@ class WeatherXMQualitySensor(CoordinatorEntity, SensorEntity):
         """Return the state of the sensor."""
         device = self._get_device_data()
         if device:
-            metrics = device.get("metrics", {})
+            metrics = device.get("metrics") or {}
             return metrics.get("qod_score")
         return None
 
@@ -45,7 +45,7 @@ class WeatherXMQualitySensor(CoordinatorEntity, SensorEntity):
         """Return the state attributes."""
         device = self._get_device_data()
         if device:
-            metrics = device.get("metrics", {})
+            metrics = device.get("metrics") or {}
             return {
                 "quality_score": metrics.get("qod_score"),
                 "penalty_reason": metrics.get("pol_reason"),
@@ -58,7 +58,7 @@ class WeatherXMQualitySensor(CoordinatorEntity, SensorEntity):
         """Return the icon to use in the frontend."""
         device = self._get_device_data()
         if device:
-            score = device.get("metrics", {}).get("qod_score", 0)
+            score = (device.get("metrics") or {}).get("qod_score", 0) or 0
             if score >= 80:
                 return "mdi:check-decagram"
             elif score >= 60:

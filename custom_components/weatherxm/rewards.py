@@ -32,7 +32,7 @@ class WeatherXMRewardsSensor(CoordinatorEntity, SensorEntity):
     def _rewards_data(self):
         """Get rewards data from coordinator."""
         device = self._get_device_data()
-        return device['rewards'] if device else {}
+        return device.get('rewards') or {} if device else {}
 
     @property
     def state(self):
@@ -86,7 +86,7 @@ class WeatherXMTotalRewardsSensor(CoordinatorEntity, SensorEntity):
     def _rewards_data(self):
         """Get rewards data from coordinator."""
         device = self._get_device_data()
-        return device['rewards'] if device else {}
+        return device.get('rewards') or {} if device else {}
 
     @property
     def state(self):
